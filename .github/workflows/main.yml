@@ -2,7 +2,9 @@ name: Run Unit Tests on Windows and Linux
 
 on:
   pull_request:
-    branches: [ main, master, develop ]
+    branches: [ main ]
+  push:
+    branches: [ main ]
 
 jobs:
   test-windows:
