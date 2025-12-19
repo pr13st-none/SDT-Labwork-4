@@ -1,0 +1,132 @@
+name: Run Unit Tests
+
+on:
+  pull_request:
+    branches: [ main, master, develop ]
+  push:
+    branches: [ main, master, develop ]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v3
+      
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.9'
+        
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        # Установите необходимые зависимости для вашего проекта
+        # pip install numpy  # если нужно
+        
+    - name: Install pytest
+      run: |
+        pip install pytest
+        
+    - name: Run unit tests with detailed output
+      id: run_tests  # Добавляем id для доступа к результатам
+      run: |
+        # Запускаем тесты и сохраняем вывод
+        python -m pytest tests/tests.py -v --tb=short 2>&1 | tee test_output.txt
+        
+    - name: Save test results
+      if: always()  # Всегда выполняем этот шаг, даже если тесты упали
+      run: |
+        # Сохраняем результаты тестов в файл для следующего шага
+        python -c "
+        import os
+        # Проверяем файл с выводом тестов
+        if os.path.exists('test_output.txt'):
+            with open('test_output.txt', 'r') as f:
+                content = f.read()
+            
+            # Проверяем, прошли ли все тесты
+            if 'FAILED' in content:
+                print('::set-output name=test_status::failed')
+                print('::set-output name=test_summary::Некоторые тесты не прошли')
+            elif 'PASSED' in content or 'passed' in content:
+                print('::set-output name=test_status::passed')
+                print('::set-output name=test_summary::Все тесты прошли успешно')
+            else:
+                print('::set-output name=test_status::unknown')
+                print('::set-output name=test_summary::Не удалось определить статус тестов')
+        else:
+            print('::set-output name=test_status::error')
+            print('::set-output name=test_summary::Файл с результатами тестов не найден')
+        "
+        
+    - name: Display test results summary
+      if: always()
+      run: |
+        echo "=== РЕЗУЛЬТАТЫ ТЕСТОВ ==="
+        echo ""
+        
+        if [ -f "test_output.txt" ]; then
+          # Выводим краткую статистику
+          echo "📊 Статистика тестов:"
+          echo "---------------------"
+          grep -E "(PASSED|FAILED|ERROR|test_.*\.py)" test_output.txt | head -20
+          echo ""
+          
+          # Ищем общую статистику
+          echo "📈 Итоги:"
+          echo "---------"
+          grep -A2 -B2 "passed\|failed\|ERROR" test_output.txt | tail -10
+          echo ""
+          
+          # Проверяем количество тестов
+          TEST_COUNT=$(grep -c "test_" test_output.txt || true)
+          PASSED_COUNT=$(grep -c "PASSED" test_output.txt || true)
+          FAILED_COUNT=$(grep -c "FAILED" test_output.txt || true)
+          ERROR_COUNT=$(grep -c "ERROR" test_output.txt || true)
+          
+          echo "📋 Детальная статистика:"
+          echo "------------------------"
+          echo "Всего тестов обнаружено: $TEST_COUNT"
+          echo "Пройдено успешно: $PASSED_COUNT"
+          echo "Не пройдено: $FAILED_COUNT"
+          echo "Ошибок: $ERROR_COUNT"
+          echo ""
+          
+          # Выводим список упавших тестов, если они есть
+          if [ "$FAILED_COUNT" -gt 0 ]; then
+            echo "❌ Упавшие тесты:"
+            echo "----------------"
+            grep -B2 "FAILED\|AssertionError" test_output.txt
+            echo ""
+          fi
+          
+          if [ "$ERROR_COUNT" -gt 0 ]; then
+            echo "⚠️ Тесты с ошибками:"
+            echo "-------------------"
+            grep -B2 "ERROR" test_output.txt
+            echo ""
+          fi
+          
+          # Выводим финальный статус
+          if [ "$FAILED_COUNT" -eq 0 ] && [ "$ERROR_COUNT" -eq 0 ]; then
+            echo "✅ ✅ ✅ ВСЕ ТЕСТЫ ПРОЙДЕНЫ УСПЕШНО! ✅ ✅ ✅"
+          else
+            echo "❌ ❌ ❌ ЕСТЬ ПРОБЛЕМЫ В ТЕСТАХ! ❌ ❌ ❌"
+            exit 1  # Завершаем с ошибкой, если тесты не прошли
+          fi
+          
+        else
+          echo "⚠️ Файл с результатами тестов не найден!"
+          exit 1
+        fi
+        
+    - name: Upload test results as artifact
+      if: always()
+      uses: actions/upload-artifact@v3
+      with:
+        name: test-results
+        path: |
+          test_output.txt
+        retention-days: 7
