@@ -1,8 +1,6 @@
 name: Run Unit Tests -> Windows and Linux
 
 on:
-  pull_request:
-    branches: [ main ]
   push:
     branches: [ main ]
 
