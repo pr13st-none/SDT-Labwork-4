@@ -1,99 +1,78 @@
-name: Run Unit Tests
+name: Run Unit Tests on Windows and Linux
 
 on:
   pull_request:
     branches: [ main, master, develop ]
-  push:
-    branches: [ main, master, develop ]
 
 jobs:
-  test:
-    runs-on: ubuntu-latest
+  test-windows:
+    runs-on: windows-latest
+    name: "Windows Tests"
     
     steps:
-    - name: Checkout code
+    - name: 📥 Checkout code
       uses: actions/checkout@v3
       
-    - name: Set up Python
+    - name: 🐍 Set up Python
       uses: actions/setup-python@v4
       with:
         python-version: '3.9'
         
-    - name: Install dependencies
+    - name: 🔧 Install dependencies
       run: |
         python -m pip install --upgrade pip
-        # Установите зависимости вашего проекта, если они есть
-        # pip install -r requirements.txt
         
-    - name: Run tests with unittest
-      id: run_tests
+    - name: 🧪 Run tests on Windows
       run: |
-        echo "🚀 Запуск тестов с unittest..."
-        echo "================================"
-        echo ""
+        Write-Host "========================================"
+        Write-Host "🧪  ЗАПУСК ТЕСТОВ НА WINDOWS  🧪"
+        Write-Host "========================================"
+        Write-Host ""
         
-        # Запускаем тесты через unittest и сохраняем вывод
-        python -m unittest testing.tests -v 2>&1 | tee test_output.txt
+        # Запускаем тесты
+        python -m unittest tests.tests -v
         
-        echo ""
-        echo "📊 Анализ результатов..."
-        echo "========================"
+        Write-Host ""
+        Write-Host "📊 Результаты выполнения на Windows:"
+        if ($LASTEXITCODE -eq 0) {
+          Write-Host "✅ Все тесты пройдены успешно на Windows!"
+        } else {
+          Write-Host "❌ Тесты завершились с ошибками на Windows!"
+          exit 1
+        }
         
-    - name: Analyze and display results
-      if: always()
+  test-linux:
+    runs-on: ubuntu-latest
+    name: "Linux Tests"
+    
+    steps:
+    - name: 📥 Checkout code
+      uses: actions/checkout@v3
+      
+    - name: 🐍 Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.9'
+        
+    - name: 🔧 Install dependencies
       run: |
-        echo "=== РЕЗУЛЬТАТЫ ТЕСТОВ ==="
+        python -m pip install --upgrade pip
+        
+    - name: 🧪 Run tests on Linux
+      run: |
+        echo "========================================"
+        echo "🧪  ЗАПУСК ТЕСТОВ НА LINUX  🧪"
+        echo "========================================"
         echo ""
         
-        if [ -f "test_output.txt" ]; then
-          # Выводим общую статистику
-          echo "📈 Итоговая статистика:"
-          echo "----------------------"
-          
-          # Считаем результаты
-          TOTAL_TESTS=$(grep -c "^test_" test_output.txt || echo "0")
-          OK_TESTS=$(grep -c "OK" test_output.txt || echo "0")
-          FAILED_TESTS=$(grep -c "FAIL" test_output.txt || echo "0")
-          ERROR_TESTS=$(grep -c "ERROR" test_output.txt || echo "0")
-          
-          # Ищем строку с итогами (обычно в конце вывода unittest)
-          FINAL_RESULT=$(tail -5 test_output.txt | grep -E "OK|FAIL|ERROR")
-          
-          echo "Всего тестов: $TOTAL_TESTS"
-          echo "Пройдено: $OK_TESTS"
-          echo "Не пройдено: $FAILED_TESTS"
-          echo "Ошибок: $ERROR_TESTS"
-          echo ""
-          
-          echo "📋 Детали выполнения:"
-          echo "-------------------"
-          
-          if [[ -n "$FINAL_RESULT" ]]; then
-            echo "Финальный результат: $FINAL_RESULT"
-          fi
-          echo ""
-          
-          # Выводим список всех тестов
-          echo "📝 Список выполненных тестов:"
-          echo "----------------------------"
-          grep -E "^(test_|OK|FAIL|ERROR)" test_output.txt
-          echo ""
-          
-          # Проверяем наличие ошибок
-          if [ "$FAILED_TESTS" -gt 0 ] || [ "$ERROR_TESTS" -gt 0 ]; then
-            echo "❌ ❌ ❌ ОБНАРУЖЕНЫ ПРОБЛЕМЫ ❌ ❌ ❌"
-            echo ""
-            echo "Упавшие тесты:"
-            echo "--------------"
-            grep -B1 "FAIL\|ERROR" test_output.txt
-            echo ""
-            exit 1
-          else
-            echo "✅ ✅ ✅ ВСЕ ТЕСТЫ ПРОЙДЕНЫ УСПЕШНО! ✅ ✅ ✅"
-            echo ""
-            echo "🎉 Поздравляем! Все $TOTAL_TESTS тестов пройдены."
-          fi
+        # Запускаем тесты
+        python -m unittest tests.tests -v
+        
+        echo ""
+        echo "📊 Результаты выполнения на Linux:"
+        if [ $? -eq 0 ]; then
+          echo "✅ Все тесты пройдены успешно на Linux!"
         else
-          echo "⚠️ Файл с результатами тестов не найден!"
+          echo "❌ Тесты завершились с ошибками на Linux!"
           exit 1
         fi
