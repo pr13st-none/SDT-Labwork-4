@@ -12,10 +12,10 @@ jobs:
     name: "Windows Tests"
     
     steps:
-    - name: 📥 Checkout code
+    - name: Checkout code
       uses: actions/checkout@v3
       
-    - name: 🐍 Set up Python
+    - name: Set up Python
       uses: actions/setup-python@v4
       with:
         python-version: '3.9'
@@ -24,22 +24,21 @@ jobs:
       run: |
         python -m pip install --upgrade pip
         
-    - name: 🧪 Run tests on Windows
+    - name: Run tests on Windows
       run: |
         Write-Host "========================================"
-        Write-Host "🧪  ЗАПУСК ТЕСТОВ НА WINDOWS  🧪"
+        Write-Host "      ЗАПУСК ТЕСТОВ НА WINDOWS          "
         Write-Host "========================================"
         Write-Host ""
         
-        # Запускаем тесты
-        python -m unittest tests.tests -v
+        python -m unittest testing.tests -v
         
         Write-Host ""
-        Write-Host "📊 Результаты выполнения на Windows:"
+        Write-Host "Результаты выполнения на Windows:"
         if ($LASTEXITCODE -eq 0) {
-          Write-Host "✅ Все тесты пройдены успешно на Windows!"
+          Write-Host "Все тесты пройдены успешно на Windows!"
         } else {
-          Write-Host "❌ Тесты завершились с ошибками на Windows!"
+          Write-Host "Тесты завершились с ошибками на Windows!"
           exit 1
         }
         
@@ -48,10 +47,10 @@ jobs:
     name: "Linux Tests"
     
     steps:
-    - name: 📥 Checkout code
+    - name: Checkout code
       uses: actions/checkout@v3
       
-    - name: 🐍 Set up Python
+    - name: Set up Python
       uses: actions/setup-python@v4
       with:
         python-version: '3.9'
@@ -60,21 +59,20 @@ jobs:
       run: |
         python -m pip install --upgrade pip
         
-    - name: 🧪 Run tests on Linux
+    - name: Run tests on Linux
       run: |
         echo "========================================"
-        echo "🧪  ЗАПУСК ТЕСТОВ НА LINUX  🧪"
+        echo "         ЗАПУСК ТЕСТОВ НА LINUX         "
         echo "========================================"
         echo ""
         
-        # Запускаем тесты
-        python -m unittest tests.tests -v
+        python -m unittest testing.tests -v
         
         echo ""
-        echo "📊 Результаты выполнения на Linux:"
+        echo "Результаты выполнения на Linux:"
         if [ $? -eq 0 ]; then
-          echo "✅ Все тесты пройдены успешно на Linux!"
+          echo "Все тесты пройдены успешно на Linux!"
         else
-          echo "❌ Тесты завершились с ошибками на Linux!"
+          echo "Тесты завершились с ошибками на Linux!"
           exit 1
         fi
